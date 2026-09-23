@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema da Lanchonete</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 450px;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-top: 0;
+    }
+    .hidden {
+      display: none;
+    }
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #219150;
+    }
+    .btn-finish {
+      background-color: #e74c3c;
+      margin-top: 15px;
+    }
+    .btn-finish:hover {
+      background-color: #c0392b;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .menu-item button {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 14px;
+      background-color: #2980b9;
+    }
+    .menu-item button:hover {
+      background-color: #1f6391;
+    }
+    .mensagem-erro {
+      color: #e74c3c;
+      font-size: 14px;
+      text-align: center;
+    }
+    .resumo {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+    }
+    .resumo p {
+      margin: 6px 0;
+    }
+    .resumo-total {
+      font-weight: bold;
+      font-size: 18px;
+      color: #2c3e50;
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    
+    <!-- TELA 1: LOGIN POR SENHA -->
+    <div id="tela-login">
+      <h2>Acesso ao Sistema</h2>
+      <p>Digite a senha para acessar o menu:</p>
+      <input type="password" id="senha" placeholder="Senha (1234)">
+      <button onclick="validarSenha()">Entrar</button>
+      <p id="erro-senha" class="mensagem-erro"></p>
+    </div>
+
+    <!-- TELA 2: MENU DE PEDIDOS -->
+    <div id="tela-menu" class="hidden">
+      <h2>Lanchonete — Cardápio</h2>
+      
+      <div class="menu-item">
+        <span>1. Hambúrguer - R$ 15,00</span>
+        <button onclick="adicionarProduto(1)">Adicionar</button>
+      </div>
+      <div class="menu-item">
+        <span>2. Pizza - R$ 20,00</span>
+        <button onclick="adicionarProduto(2)">Adicionar</button>
+      </div>
+      <div class="menu-item">
+        <span>3. Refrigerante - R$ 6,00</span>
+        <button onclick="adicionarProduto(3)">Adicionar</button>
+      </div>
+      <div class="menu-item">
+        <span>4. Batata Frita - R$ 10,00</span>
+        <button onclick="adicionarProduto(4)">Adicionar</button>
+      </div>
+
+      <button class="btn-finish" onclick="finalizarPedido()">0. Finalizar Pedido</button>
+      <p id="msg-carrinho" style="color: #27ae60; text-align: center; font-weight: bold;"></p>
+    </div>
+
+    <!-- TELA 3: RELATÓRIO DO PEDIDO -->
+    <div id="tela-relatorio" class="hidden">
+      <h2>Resumo do Pedido</h2>
+      
+      <div id="lista-registros" style="font-size: 14px; color: #555; max-height: 120px; overflow-y: auto;">
+        <!-- Lista gerada dinamicamente pelo FOR -->
+      </div>
+
+      <div class="resumo">
+        <p id="resumo-subtotal">Subtotal: R$ 0,00</p>
+        <p id="resumo-desconto">Desconto: R$ 0,00</p>
+        <p id="resumo-total" class="resumo-total">Total: R$ 0,00</p>
+      </div>
+
+      <button onclick="reiniciar()" style="margin-top: 15px; background-color: #7f8c8d;">Novo Pedido</button>
+    </div>
+
+  </div>
+
+  <script>
+    let subtotal = 0;
+    let totalItens = 0;
+
+    // 1. Validação de Senha
+    function validarSenha() {
+      const senhaDigitada = document.getElementById("senha").value;
+      const erroElemento = document.getElementById("erro-senha");
+
+      if (senhaDigitada === "1234") {
+        document.getElementById("tela-login").classList.add("hidden");
+        document.getElementById("tela-menu").classList.remove("hidden");
+        erroElemento.innerText = "";
+      } else {
+        erroElemento.innerText = "Senha incorreta! Tente novamente.";
+        document.getElementById("senha").value = "";
+      }
+    }
+
+    // 2. Menu com Switch
+    function adicionarProduto(opcao) {
+      const msg = document.getElementById("msg-carrinho");
+
+      switch (opcao) {
+        case 1:
+          subtotal += 15.00;
+          totalItens++;
+          msg.innerText = "Hambúrguer adicionado!";
+          break;
+        case 2:
+          subtotal += 20.00;
+          totalItens++;
+          msg.innerText = "Pizza adicionada!";
+          break;
+        case 3:
+          subtotal += 6.00;
+          totalItens++;
+          msg.innerText = "Refrigerante adicionado!";
+          break;
+        case 4:
+          subtotal += 10.00;
+          totalItens++;
+          msg.innerText = "Batata Frita adicionada!";
+          break;
+        default:
+          alert("Opção inválida!");
+          return;
+      }
+
+      // Limpa a mensagem após 1.5 segundos
+      setTimeout(() => { msg.innerText = ""; }, 1500);
+    }
+
+    // 3. Finalização, Laço FOR e Operador Ternário
+    function finalizarPedido() {
+      if (totalItens === 0) {
+        alert("Adicione pelo menos um item antes de finalizar!");
+        return;
+      }
+
+      // Oculta o menu e mostra a tela final
+      document.getElementById("tela-menu").classList.add("hidden");
+      document.getElementById("tela-relatorio").classList.remove("hidden");
+
+      // Laço FOR para registrar os itens
+      const containerRegistros = document.getElementById("lista-registros");
+      containerRegistros.innerHTML = "";
+      for (let i = 1; i <= totalItens; i++) {
+        containerRegistros.innerHTML += `<p style="margin:2px 0;">Produto ${i} registrado</p>`;
+      }
+
+      // Operador Ternário para o Desconto (10% se subtotal >= 50)
+      const desconto = (subtotal >= 50.00) ? (subtotal * 0.10) : 0.0;
+      const totalFinal = subtotal - desconto;
+
+      // Atualiza os valores na tela
+      document.getElementById("resumo-subtotal").innerText = `Subtotal: R$ ${subtotal.toFixed(2)}`;
+      document.getElementById("resumo-desconto").innerText = `Desconto (10%): R$ ${desconto.toFixed(2)}`;
+      document.getElementById("resumo-total").innerText = `Total Final: R$ ${totalFinal.toFixed(2)}`;
+    }
+
+    // Reinicia a aplicação
+    function reiniciar() {
+      subtotal = 0;
+      totalItens = 0;
+      document.getElementById("senha").value = "";
+      document.getElementById("tela-relatorio").classList.add("hidden");
+      document.getElementById("tela-login").classList.remove("hidden");
+    }
+  </script>
+
+</body>
+</html>
