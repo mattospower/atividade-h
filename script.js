@@ -1,83 +1,108 @@
-// Para rodar no Node.js (instale antes: npm install readline-sync)
-const readline = require('readline-sync');
+// Variáveis de controlo do pedido
+let subtotal = 0;
+let totalItens = 0;
 
-function sistemaLanchonete() {
-    let senha;
+// =========================================================
+// 1. SELEÇÃO DE ELEMENTOS (getElementById e querySelectorAll)
+// =========================================================
+let campoSenha = document.getElementById("campo-senha");
+let btnEntrar = document.getElementById("btn-entrar");
+let msgErro = document.getElementById("msg-erro");
 
-    // 1. Senha — do...while
-    do {
-        senha = readline.question('Digite a senha: ');
-        if (senha !== '1234') {
-            console.log('Senha incorreta!');
-        }
-    } while (senha !== '1234');
+let painelLogin = document.getElementById("painel-login");
+let painelMenu = document.getElementById("painel-menu");
+let painelRelatorio = document.getElementById("painel-relatorio");
 
-    console.log('Acesso permitido!\n');
-    console.log('=== SISTEMA DA LANCHONETE ===');
+let statusPedido = document.getElementById("status-pedido");
+let btnFinalizar = document.getElementById("btn-finalizar");
 
-    let opcao;
-    let subtotal = 0;
-    let totalItens = 0;
+let listaProdutos = document.getElementById("lista-produtos");
+let outSubtotal = document.getElementById("out-subtotal");
+let outDesconto = document.getElementById("out-desconto");
+let outTotal = document.getElementById("out-total");
 
-    // 4. Pedidos — while
-    while (true) {
-        console.log('\n1 - Hambúrguer - R$ 15,00');
-        console.log('2 - Pizza - R$ 20,00');
-        console.log('3 - Refrigerante - R$ 6,00');
-        console.log('4 - Batata Frita - R$ 10,00');
-        console.log('0 - Finalizar');
+// Seleção em lote através de seletor CSS, retornando uma NodeList
+let botoesMenu = document.querySelectorAll(".opcao-menu");
 
-        opcao = parseInt(readline.question('Escolha: '));
+// =========================================================
+// 2. EVENTOS DE AUTENTICAÇÃO (click e keydown)
+// =========================================================
 
-        // 5. Finalização — break
-        if (opcao === 0) {
-            break;
-        }
-
-        // 2. Menu — switch
-        switch (opcao) {
-            case 1:
-                subtotal += 15.00;
-                totalItens++;
-                console.log('Hambúrguer adicionado!');
-                break;
-            case 2:
-                subtotal += 20.00;
-                totalItens++;
-                console.log('Pizza adicionada!');
-                break;
-            case 3:
-                subtotal += 6.00;
-                totalItens++;
-                console.log('Refrigerante adicionado!');
-                break;
-            case 4:
-                subtotal += 10.00;
-                totalItens++;
-                console.log('Batata Frita adicionada!');
-                break;
-            default:
-                console.log('Opção inválida!');
-                // 3. Validação — continue
-                continue;
-        }
-    }
-
-    console.log('\n--- Resumo do Pedido ---');
-
-    // 6. Quantidade — for
-    for (let i = 1; i <= totalItens; i++) {
-        console.log(`Produto ${i} registrado`);
-    }
-
-    // 7. Desconto — operador ternário
-    const desconto = (subtotal >= 50.00) ? (subtotal * 0.10) : 0.0;
-    const totalFinal = subtotal - desconto;
-
-    console.log(`Subtotal: R$ ${subtotal.toFixed(2)}`);
-    console.log(`Desconto: R$ ${desconto.toFixed(2)}`);
-    console.log(`Total: R$ ${totalFinal.toFixed(2)}`);
+// Função para validar a senha
+function verificarSenha() {
+  // Leitura do valor introduzido no campo via .value
+  if (campoSenha.value === "1234") {
+    // Alteração de estilo via propriedade .style do elemento DOM
+    painelLogin.style.display = "none";
+    painelMenu.style.display = "block";
+  } else {
+    // Atualização de texto com .innerText
+    msgErro.innerText = "Senha incorreta!";
+    campoSenha.value = "";
+  }
 }
 
-// Para executar:
-sistemaLanchonete();
+// Evento de clique no botão de acesso
+btnEntrar.addEventListener("click", () => {
+  verificarSenha();
+});
+
+// Evento de tecla pressionada (keydown) no campo de texto
+campoSenha.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    verificarSenha();
+  }
+});
+
+// =========================================================
+// 3. REGISTO DOS PEDIDOS (querySelectorAll + forEach + click)
+// =========================================================
+
+// Percorre a NodeList obtida pelo querySelectorAll utilizando forEach
+botoesMenu.forEach((botao) => {
+  botao.addEventListener("click", () => {
+    let preco = parseFloat(botao.getAttribute("data-preco"));
+    let nome = botao.getAttribute("data-nome");
+
+    subtotal += preco;
+    totalItens++;
+
+    // Atualização do texto de confirmação com .innerText
+    statusPedido.innerText = `${nome} adicionado!`;
+  });
+});
+
+// =========================================================
+// 4. FINALIZAÇÃO E RELATÓRIO (Laço FOR + Operador Ternário)
+// =========================================================
+
+btnFinalizar.addEventListener("click", () => {
+  if (totalItens === 0) {
+    statusPedido.innerText = "Adicione pelo menos um item!";
+    statusPedido.style.color = "red";
+    return;
+  }
+
+  // Transição de visualização entre painéis
+  painelMenu.style.display = "none";
+  painelRelatorio.style.display = "block";
+
+  listaProdutos.innerText = "";
+
+  // Laço for para criar os registos dinamicamente
+  for (let i = 1; i <= totalItens; i++) {
+    let p = document.createElement("p");
+    p.innerText = `Produto ${i} registrado`;
+    p.className = "item-registo";
+    listaProdutos.appendChild(p);
+  }
+
+  // Operador ternário para determinar o desconto de 10%
+  let desconto = (subtotal >= 50.00) ? (subtotal * 0.10) : 0.0;
+  let totalFinal = subtotal - desconto;
+
+  // Atualização dos totais finais com .innerText
+  outSubtotal.innerText = `Subtotal: R$ ${subtotal.toFixed(2)}`;
+  outDesconto.innerText = `Desconto: R$ ${desconto.toFixed(2)}`;
+  outTotal.innerText = `Total: R$ ${totalFinal.toFixed(2)}`;
+});
